@@ -15,7 +15,8 @@ struct Event{
     Signal _sig;
 };
 
-using Handler_Func = std::function <Handling_Result(Event*)>;
+using Handler_Func = std::function <void(Event*)>;
+using Substate_Exit_Func = std::function <void(void)>;
 
 
 #endif //H_FSM_EVENTS_H

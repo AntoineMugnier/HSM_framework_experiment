@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17)
-project(Kaor_HSM C CXX ASM)
+project(Kaori_HSM C CXX ASM)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_STANDARD 11)
 add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)

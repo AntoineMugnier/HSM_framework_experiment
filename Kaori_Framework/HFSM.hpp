@@ -25,7 +25,7 @@
 template<class TOP_STATE_T >
 class HFSM_Base{
 
-    template<class Top_State_T_bis, class STATE_CLASS_CHILD_T, typename ...SUB_STATES_T >
+    template<class TOP_STATE_T_bis, class USER_STATE_BASE_T, class USER_STATE_T, typename... SUB_STATES_T>
     friend class State;
 
     template< class TOP_STATE_T_bis, class PARENT_STATE_T, class CUSTOM_STATE_T, typename ...SUB_STATES_T >
@@ -65,7 +65,7 @@ protected:
  * @brief The base constructor initializing the state machine. Called by the child
  */
     HFSM_Base() {
-        _top_state.pass_hfsm_ptr_to_state(this); // Pass the this pointer to all substates
+        _top_state.pass_ptrs_to_state(this); // Pass the this pointer to all substates
         _top_state.init();
 
     };
