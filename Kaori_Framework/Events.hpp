@@ -16,7 +16,7 @@ struct Event{
 };
 
 using Handler_Func = std::function <void(Event*)>;
-using Substate_Exit_Func = std::function <void(void)>;
+using State_Exit_Func = std::function <void(void)>;
 
 
 #endif //H_FSM_EVENTS_H

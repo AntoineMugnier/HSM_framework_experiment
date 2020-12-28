@@ -9,7 +9,7 @@
 template<typename TOP_STATE_T >
 class HFSM_Base;
 
-template< class TOP_STATE_T, class PARENT_STATE_T, class CUSTOM_STATE_T, typename ...SUB_STATES_T >
+template< class TOP_STATE_T, class PARENT_STATE_T, class USER_STATE_T, typename ...SUB_STATES_T >
 class Custom_State_Base;
 
 struct Event;
@@ -69,6 +69,9 @@ public:
     template<int index = 0>
     void pass_ptrs_to_substates (HFSM_Base<TOP_STATE_T>* hfsm, std::integral_constant<int, index> = std::integral_constant<int, 0>());
 
+    void handle_event_from_substate_0(Event* event, State_Exit_Func* substate_exit){
+        static_cast<USER_STATE_BASE_T*>(this) -> handle_event_from_substate_1(event, substate_exit);
+    }
 
 protected:
     State(){};
@@ -111,11 +114,11 @@ void State<TOP_STATE_T, USER_STATE_BASE_T, USER_STATE_T, SUB_STATES_T...>::pass_
 
 
 /*----------------BASE CLASS FOR USER STATES---------------- */
-template< class TOP_STATE_T, class PARENT_STATE_T, class CUSTOM_STATE_T, typename ...SUB_STATES_T >
-class Custom_State_Base : public State<TOP_STATE_T, Custom_State_Base<TOP_STATE_T,PARENT_STATE_T, CUSTOM_STATE_T, SUB_STATES_T... >, CUSTOM_STATE_T,  SUB_STATES_T ...>{
+template< class TOP_STATE_T, class PARENT_STATE_T, class USER_STATE_T, typename ...SUB_STATES_T >
+class Custom_State_Base : public State<TOP_STATE_T, Custom_State_Base<TOP_STATE_T,PARENT_STATE_T, USER_STATE_T, SUB_STATES_T... >, USER_STATE_T,  SUB_STATES_T ...>{
 
     friend class HFSM_Base <TOP_STATE_T>;
-    using Super = State<TOP_STATE_T, Custom_State_Base<TOP_STATE_T,PARENT_STATE_T, CUSTOM_STATE_T, SUB_STATES_T... >, CUSTOM_STATE_T, SUB_STATES_T ...>;
+    using Super = State<TOP_STATE_T, Custom_State_Base<TOP_STATE_T,PARENT_STATE_T, USER_STATE_T, SUB_STATES_T... >, USER_STATE_T, SUB_STATES_T ...>;
     using Substates_Tuple_T = std::tuple<SUB_STATES_T...>;
 
 public:
@@ -133,7 +136,7 @@ public:
 
     template<typename SETUP_PTR_T>
     void custom_state_base_setup(SETUP_PTR_T setup_ptr){
-        static_cast<CUSTOM_STATE_T*>(this) -> setup(setup_ptr);
+        static_cast<USER_STATE_T*>(this) -> setup(setup_ptr);
     };
 
     void pass_ptrs_to_state(HFSM_Base<TOP_STATE_T>* hfsm, PARENT_STATE_T* parent_state ){
@@ -145,19 +148,26 @@ public:
         }
     };
 
+    void handle_event_from_substate_1(Event* event, State_Exit_Func* substate_exit){
+        _state_exit = [=](){
+            (*substate_exit)();
+            static_cast<USER_STATE_T*>(this) -> exit();
+        };
+
+        Super::state_handler(event);
+    }
 protected:
     PARENT_STATE_T* _parent_state;
 
 private:
-    Substate_Exit_Func substate_exit = nullptr;
+    State_Exit_Func _state_exit = [=](){static_cast<USER_STATE_T*>(this) -> exit();};
     HFSM_Base<TOP_STATE_T>* _hfsm;
-    void exit_to_parent();
 };
 
 
-template<class TOP_STATE_T, class PARENT_STATE_T, class CUSTOM_STATE_T, typename... SUB_STATES_T>
+template<class TOP_STATE_T, class PARENT_STATE_T, class USER_STATE_T, typename... SUB_STATES_T>
 template<typename ...STATE_TYPE_HIERARCHY_TO_LEAF>
-void Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, CUSTOM_STATE_T, SUB_STATES_T...>::trigger_transition() {
+void Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_STATE_T, SUB_STATES_T...>::trigger_transition() {
     //_hfsm->_top_state_h.template  set_as_current_state<STATE_TYPE_HIERARCHY_TO_LEAF...>();
     // Evaluate if we have to go upward or downward the state hierarchy
     if constexpr (std::tuple_size<Substates_Tuple_T>::value >0) ;
@@ -166,22 +176,16 @@ void Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, CUSTOM_STATE_T, SUB_STATES_T
 }
 
 
-template<class TOP_STATE_T, class PARENT_STATE_T, class CUSTOM_STATE_T, typename... SUB_STATES_T>
+template<class TOP_STATE_T, class PARENT_STATE_T, class USER_STATE_T, typename... SUB_STATES_T>
 void
-Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, CUSTOM_STATE_T, SUB_STATES_T...>::custom_state_base_handler( Event *event) {
+Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_STATE_T, SUB_STATES_T...>::custom_state_base_handler( Event *event) {
 
 
-    if( static_cast<CUSTOM_STATE_T*>(this) -> handler(event) == Handling_Result::IGNORED){
-        _parent_state->state_handler(event);
+    if( static_cast<USER_STATE_T*>(this) -> handler(event) == Handling_Result::IGNORED){
+        _parent_state->handle_event_from_substate_0(event, &_state_exit);
     }
 
 }
-
-template<class TOP_STATE_T, class PARENT_STATE_T, class CUSTOM_STATE_T, typename... SUB_STATES_T>
-void Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, CUSTOM_STATE_T, SUB_STATES_T...>::exit_to_parent() {
-    _hfsm->_current_state_h = _parent_state->get_handler();
-}
-
 
 /*----------------BASE CLASS FOR TOP STATE---------------- */
 template<typename TOP_STATE_T, typename ...SUB_STATES_T >
@@ -194,6 +198,10 @@ public:
 
     Handling_Result custom_state_base_handler( Event* event) {
         return Handling_Result::IGNORED;
+    }
+
+    void handle_event_from_substate_1(Event* event, State_Exit_Func* substate_exit){
+        Super::state_handler(event);
     }
 
     void pass_ptrs_to_state(HFSM_Base<TOP_STATE_T>* hfsm){
