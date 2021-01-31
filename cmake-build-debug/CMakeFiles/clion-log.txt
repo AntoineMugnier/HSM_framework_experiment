@@ -1,0 +1,5 @@
+C:\Users\MugnierPC-N202\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\202.7319.62\bin\cmake\win\bin\cmake.exe -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - MinGW Makefiles" "C:\Git projects\Kaori_HSM"
+-- Minimal optimization, debug info included
+-- Configuring done
+-- Generating done
+-- Build files have been written to: C:/Git projects/Kaori_HSM/cmake-build-debug

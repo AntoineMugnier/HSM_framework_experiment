@@ -20,12 +20,14 @@ struct Custom_Event : Event{
 /*
  *
  * Top_State_bis ---------- User_State_0_bis ------ User_State_1_bis
- *                            |____________ User_State_1_bis
+ *                            |____________ User_State_2_bis
  *
  */
 class Top_State_bis;
 
 class User_State_0_bis;
+
+class User_State_1_bis;
 
 class User_State_2_bis : public Custom_State_Base<
         Top_State_bis, //TOP State Type,
@@ -35,17 +37,23 @@ class User_State_2_bis : public Custom_State_Base<
 public:
     User_State_2_bis(){};
     Handling_Result handler(Event* event){
+        switch (event->_sig) {
+            case  Signal::CS_SIG:
+                std::cout<< " User_State_2_bis HANDLE TRIGGERED" << std::endl ;
+                return trigger_transition<User_State_1_bis>();
+        }
         return Handling_Result::IGNORED;
     };
 
     void init(){
         std::cout<< "Init of customized state <User_State_0_bis,User_State_2_bis>\n";
-        std::cout<< S ;
     };
-    void entry(){};
+    void entry(){
+        std::cout<< "Entry of state User_State_2_bis" << std::endl ;
+
+    };
     void exit(){};
 private:
-    std::string S = "String triggered !\n" ;
 };
 
 
@@ -61,10 +69,13 @@ public:
         return Handling_Result::IGNORED;
     };
     void init(){
-        std::cout<< "Init of customized state <User_State_0_bis,User_State_1_bis>";
+        std::cout<< "Init of customized state <User_State_0_bis,User_State_1_bis>" << std::endl;
 
     };
-    void entry(){};
+    void entry(){
+        std::cout<< "Entry of customized state <User_State_0_bis,User_State_1_bis>"<< std::endl;
+
+    };
     void exit(){};
 };
 
@@ -105,14 +116,14 @@ public:
 Top_State_bis(){};
     //Initial transition
     void init(){
-        set_as_current_state<User_State_0_bis>();
+        std::cout<< "Initial transition taken" << std::endl ;
+        trigger_transition<User_State_2_bis>();
     }
 };
 
 class Hfsm_bis : public HFSM_Base<Top_State_bis>{
 public:
     Hfsm_bis(){};
-
 
 };
 

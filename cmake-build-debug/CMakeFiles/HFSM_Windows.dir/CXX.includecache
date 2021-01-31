@@ -1,0 +1,46 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../Kaori_Framework/Events.hpp
+
+../Kaori_Framework/HFSM.hpp
+cstdint
+-
+tuple
+-
+State.hpp
+-
+
+../Kaori_Framework/State.hpp
+tuple
+../Kaori_Framework/tuple
+functional
+../Kaori_Framework/functional
+Events.hpp
+../Kaori_Framework/Events.hpp
+HFSM.hpp
+../Kaori_Framework/HFSM.hpp
+type_traits
+-
+
+../Kaori_Tests_Files/Custom_Hsfm2.hpp
+HFSM.hpp
+-
+cstdint
+-
+string
+../Kaori_Tests_Files/string
+
+C:/Git projects/Kaori_HSM/main.cpp
+iostream
+-
+Custom_Hsfm2.hpp
+C:/Git projects/Kaori_HSM/Custom_Hsfm2.hpp
+HFSM.hpp
+C:/Git projects/Kaori_HSM/HFSM.hpp
+

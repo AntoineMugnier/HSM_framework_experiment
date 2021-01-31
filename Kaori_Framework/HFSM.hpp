@@ -22,6 +22,9 @@
  * @tparam TOP_STATE_T Type of the top state that the state machine contains
  */
 
+
+
+
 template<class TOP_STATE_T >
 class HFSM_Base{
 
@@ -58,25 +61,22 @@ public:
         _top_state.template state_setup<STATE_TYPE_HIERARCHY_TO_LEAF...>(struct_ptr);
     };
 
-
-
 protected:
     /**
  * @brief The base constructor initializing the state machine. Called by the child
  */
-    HFSM_Base() {
-        _top_state.pass_ptrs_to_state(this); // Pass the this pointer to all substates
-        _top_state.init();
-
-    };
-
     TOP_STATE_T _top_state;
+
+
     Handler_Func* _current_state_h;
     Handler_Func* path[MAX_NEST_DEPTH];
+    HFSM_Base();
 
 };
 
-
-
-
+template<class TOP_STATE_T >
+HFSM_Base<TOP_STATE_T>::HFSM_Base() {
+    _top_state.pass_ptrs_to_state(this); // Pass the this pointer to all substates
+    _top_state.init();
+};
 #endif //H_FSM_HFSM_H

@@ -4,9 +4,10 @@
 
 int main() {
     Hfsm_bis h = Hfsm_bis();
-    Event ev = {Signal::INIT_SIG};
+
+    Event ev = {Signal::CS_SIG};
     Setup_Struct str = {5};
-    h.state_setup<User_State_0_bis>(&str);
+    //h.state_setup<User_State_0_bis>(&str);
     h.dispatch(&ev);
 
 std::cout<< "END" ;
