@@ -105,6 +105,7 @@ public:
                 if constexpr (substate_t::has_substates()) {
                     substate.entry();
                     substate.init();
+                    substate._init_transition_cb();
                 }
                 else {
                     //if the target state does not have substates, enter it and set it as the current state
@@ -136,8 +137,8 @@ public:
         else return false;
     }
 
-    void handle_event_from_substate_0(Event* event, State_Exit_Func* substate_exit){
-        static_cast<USER_STATE_BASE_T*>(this) -> handle_event_from_substate_1(event, substate_exit);
+    void handle_event_from_substate_b(Event* event, State_Exit_Func* substate_exit){
+        static_cast<USER_STATE_BASE_T*>(this) -> handle_event_from_substate(event, substate_exit);
     }
 
 
@@ -226,7 +227,7 @@ public:
 
     void pass_ptrs_to_state(HFSM_Base<TOP_STATE_T>* hfsm, PARENT_STATE_T* parent_state);;
 
-    void handle_event_from_substate_1(Event* event, State_Exit_Func* substate_exit){
+    void handle_event_from_substate(Event* event, State_Exit_Func* substate_exit){
 
         _subnstate_exit = substate_exit;
 
@@ -239,6 +240,7 @@ public:
         // If this substate type is the state type we seek
         if constexpr  (std::is_same<CUSTOM_STATE_T, USER_STATE_T>::value){
             static_cast<USER_STATE_T*>(this)->init();
+            _init_transition_cb();
         }
         else if constexpr (Super::template seek_state<CUSTOM_STATE_T>()){
             Super::template drill_state_hierarchy<CUSTOM_STATE_T>();
@@ -249,6 +251,9 @@ public:
         }
     }
 
+    template<class CUSTOM_STATE_T>
+    constexpr Handling_Result initial_transition_to_state();
+
 protected:
     PARENT_STATE_T* _parent_state;
 
@@ -256,8 +261,31 @@ private:
     State_Exit_Func _state_exit = [=](){static_cast<USER_STATE_T*>(this) -> exit();};
     Subnstate_Exit_Func* _subnstate_exit;
     Trigger_Transition_Func _trigger_transition_cb ;
+    Trigger_Transition_Func _init_transition_cb ;
+
     HFSM_Base<TOP_STATE_T>* _hfsm;
 };
+
+template<class TOP_STATE_T, class PARENT_STATE_T, class USER_STATE_T, class... SUB_STATE_T>
+template<class CUSTOM_STATE_T>
+constexpr  Handling_Result Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::initial_transition_to_state(){
+    _init_transition_cb = [this]() {
+
+        //Check statically if this state is in our fsm
+        static_assert(((_hfsm->_top_state).template seek_state<CUSTOM_STATE_T>()), "The state targeted by this transition does not belong to this state machine");
+
+        //If the transition target is self
+        static_assert(! std::is_same<CUSTOM_STATE_T, USER_STATE_T>::value, "Initial transition cannot target the state emitting it");
+        //If the transition target is one of the substates
+        static_assert(Super::template seek_state<CUSTOM_STATE_T>(), "Initial transition cannot target a parent state of the state emitting it");
+
+        // Drill state hierarchy to find the target of the transition
+        Super:: template  drill_state_hierarchy<CUSTOM_STATE_T>();
+    };
+
+    return Handling_Result::TRANSITION;
+
+}
 
 
 template<class TOP_STATE_T, class PARENT_STATE_T, class USER_STATE_T, class... SUB_STATE_T>
@@ -270,11 +298,6 @@ constexpr  Handling_Result Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_S
         //Check statically if this state is in our fsm
         static_assert(((_hfsm->_top_state).template seek_state<CUSTOM_STATE_T>()), "The state targeted by this transition does not belong to this state machine");
 
-        //Exit all substates if there are ones
-        if constexpr (Super::has_substates()){
-            (*_subnstate_exit)();
-        }
-
         //If the transition target is self
         if constexpr (std::is_same<CUSTOM_STATE_T, USER_STATE_T>::value){
 
@@ -283,6 +306,7 @@ constexpr  Handling_Result Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_S
 
             if constexpr (Super::has_substates()) {
                 static_cast<USER_STATE_T *>(this)->init();
+                _init_transition_cb();
             }
             else{
                 set_as_current_state();
@@ -294,7 +318,6 @@ constexpr  Handling_Result Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_S
         }
         //Else, then we ascend state hierarchy to find the state
         else {
-            //Call the ascend_state_hierarchy() method leading eventually to an immediate drill
             _parent_state->template ascend_state_hierarchy<CUSTOM_STATE_T>();
         }
         };
@@ -307,18 +330,26 @@ template<class TOP_STATE_T, class PARENT_STATE_T, class USER_STATE_T, class... S
 void
 Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::custom_state_base_handler( Event *event) {
 
-    Handling_Result h_result = static_cast<USER_STATE_T*>(this) -> handler(event);
+    Handling_Result&& h_result = static_cast<USER_STATE_T*>(this) -> handler(event);
 
-    if(  h_result == Handling_Result::IGNORED){
-        _state_exit = [this](){
+    if(h_result == Handling_Result::TRANSITION){
+        //Exit all substates if there are ones
+        if constexpr (Super::has_substates()){
             (*_subnstate_exit)();
-            static_cast<USER_STATE_T*>(this) -> exit();
-        };
-        _parent_state->handle_event_from_substate_0(event, &_state_exit);
-    }
-    else if(h_result == Handling_Result::TRANSITION){
+        }
         _trigger_transition_cb();
     }
+
+    else if(  h_result == Handling_Result::IGNORED){
+        _state_exit = [this](){
+            if constexpr (Super::has_substates()) {
+                (*_subnstate_exit)();
+            }
+            static_cast<USER_STATE_T*>(this) -> exit();
+        };
+        _parent_state->handle_event_from_substate_b(event, &_state_exit);
+    }
+
 
 }
 
@@ -347,7 +378,7 @@ public:
         return Handling_Result::IGNORED;
     }
 
-    void handle_event_from_substate_1(Event* event, State_Exit_Func* substate_exit){
+    void handle_event_from_substate(Event* event, State_Exit_Func* substate_exit){
         Super::state_handler(event);
     }
 

@@ -39,17 +39,17 @@ public:
     Handling_Result handler(Event* event){
         switch (event->_sig) {
             case  Signal::CS_SIG:
-                std::cout<< " User_State_2_bis HANDLE TRIGGERED" << std::endl ;
-                return trigger_transition<User_State_1_bis>();
+                std::cout<< " User_State_2_bis CS_SIG" << std::endl ;
+                return trigger_transition<User_State_0_bis>();
         }
         return Handling_Result::IGNORED;
     };
 
     void init(){
-        std::cout<< "Init of customized state <User_State_0_bis,User_State_2_bis>\n";
+        std::cout<< "Init of User_State_2_bis" << std::endl;
     };
     void entry(){
-        std::cout<< "Entry of state User_State_2_bis" << std::endl ;
+        std::cout<< "Entry of User_State_2_bis" << std::endl ;
 
     };
     void exit(){};
@@ -69,11 +69,11 @@ public:
         return Handling_Result::IGNORED;
     };
     void init(){
-        std::cout<< "Init of customized state <User_State_0_bis,User_State_1_bis>" << std::endl;
+        std::cout<< "Init of User_State_1_bis"<< std::endl;
 
-    };
+    }
     void entry(){
-        std::cout<< "Entry of customized state <User_State_0_bis,User_State_1_bis>"<< std::endl;
+        std::cout<< "Entry of User_State_1_bis"<< std::endl;
 
     };
     void exit(){};
@@ -92,15 +92,25 @@ class User_State_0_bis : public Custom_State_Base<
 public:
     User_State_0_bis(){};
     Handling_Result handler(Event* event){
+        switch (event->_sig) {
+            case Signal::CS_SIG:
+                std::cout << " User_State_0_bis CS_SIG" << std::endl;
+                return Handling_Result::HANDLED;
+        }
+
         return Handling_Result::IGNORED;
     };
     void init(){
-        std::cout<< "Init of customized state <User_State_0_bis>\n";
+        std::cout<< "Init of User_State_0_bis" << std::endl;
+        initial_transition_to_state<User_State_1_bis>();
 
-        std::cout<< _data ;
     };
-    void entry(){};
-    void exit(){};
+    void entry(){
+        std::cout<< "Entry of User_State_0_bis" << std::endl;
+    };
+    void exit(){
+        std::cout<< "Exit of User_State_0_bis" << std::endl;
+    };
     void setup(Setup_Struct* struct_ptr){
         _data = struct_ptr->data ;
     };
