@@ -9,6 +9,8 @@
 #include <HFSM.hpp>
 #include <cstdint>
 #include "string"
+#include <iostream>
+
 enum struct Signal;
 
 
@@ -127,7 +129,7 @@ Top_State_bis(){};
     //Initial transition
     void init(){
         std::cout<< "Initial transition taken" << std::endl ;
-        trigger_transition<User_State_2_bis>();
+        topmost_init_tran_to_state<User_State_2_bis>();
     }
 };
 

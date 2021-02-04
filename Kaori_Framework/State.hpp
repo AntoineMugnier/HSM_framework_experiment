@@ -254,10 +254,8 @@ public:
     template<class CUSTOM_STATE_T>
     constexpr Handling_Result initial_transition_to_state();
 
-protected:
+//protected: TODO remove ?
     PARENT_STATE_T* _parent_state;
-
-private:
     State_Exit_Func _state_exit = [=](){static_cast<USER_STATE_T*>(this) -> exit();};
     Subnstate_Exit_Func* _subnstate_exit;
     Trigger_Transition_Func _trigger_transition_cb ;
@@ -383,7 +381,7 @@ public:
     }
 
     template<class CUSTOM_STATE_T>
-     Handling_Result inline trigger_transition(){
+     Handling_Result inline initial_transition_to_state(){
         static_assert(Super::template seek_state<CUSTOM_STATE_T>(), "The state targeted by this transition does not belong to this state machine");
         static_assert(!std::is_same<TOP_STATE_T,CUSTOM_STATE_T>::value, "Top state cannot be a target of state transition");
 

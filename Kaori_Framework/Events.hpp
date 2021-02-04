@@ -5,7 +5,8 @@
 #ifndef H_FSM_EVENTS_H
 #define H_FSM_EVENTS_H
 
-enum struct Signal{CS_SIG};
+enum struct Signal{CS_SIG
+};
 enum struct Handling_Result{HANDLED, IGNORED, TRANSITION};
 
 
