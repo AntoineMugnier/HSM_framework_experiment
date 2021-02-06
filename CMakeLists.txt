@@ -28,4 +28,4 @@ endif ()
 include_directories(Kaori_Framework Kaori_Tests_Files)
 
 add_link_options(-Wl,-gc-sections)
-add_executable(HFSM_Windows main.cpp)
+add_executable(HFSM_Windows main.cpp Kaori_Tests_Files/HFSM_QP_replica.cpp)

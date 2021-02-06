@@ -25,13 +25,13 @@
 
 
 
-template<class TOP_STATE_T >
+template<class USER_HFSM, class TOP_STATE_T>
 class HFSM_Base{
 
-    template<class TOP_STATE_T_bis, class USER_STATE_BASE_T, class USER_STATE_T, typename... SUB_STATES_T>
+    template<class USER_HFSM_T_bis, class USER_STATE_BASE_T, class USER_STATE_T, typename... SUB_STATES_T>
     friend class State;
 
-    template< class TOP_STATE_T_bis, class PARENT_STATE_T, class CUSTOM_STATE_T, typename ...SUB_STATES_T >
+    template< class USER_HFSM_T_bis, class PARENT_STATE_T, class CUSTOM_STATE_T, typename ...SUB_STATES_T >
     friend class Custom_State_Base;
 
 
@@ -74,9 +74,9 @@ protected:
 
 };
 
-template<class TOP_STATE_T >
-HFSM_Base<TOP_STATE_T>::HFSM_Base() {
-    _top_state.pass_ptrs_to_state(this); // Pass the this pointer to all substates
+template<class USER_HFSM, class TOP_STATE_T>
+HFSM_Base<USER_HFSM, TOP_STATE_T>::HFSM_Base() {
+    _top_state.pass_ptrs_to_state(static_cast<USER_HFSM*>(this)); // Pass the this pointer to all substates
     _top_state.init();
 };
 #endif //H_FSM_HFSM_H

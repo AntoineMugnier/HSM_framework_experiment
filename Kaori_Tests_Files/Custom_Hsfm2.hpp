@@ -129,7 +129,7 @@ Top_State_bis(){};
     //Initial transition
     void init(){
         std::cout<< "Initial transition taken" << std::endl ;
-        topmost_init_tran_to_state<User_State_2_bis>();
+        init_tran_to_state<User_State_2_bis>();
     }
 };
 

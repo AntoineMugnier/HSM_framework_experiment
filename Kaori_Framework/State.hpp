@@ -8,16 +8,14 @@
 #include "HFSM.hpp"
 #include <type_traits>
 
-template<class TOP_STATE_T >
-class HFSM_Base;
 
-template< class TOP_STATE_T, class PARENT_STATE_T, class USER_STATE_T, class ...SUB_STATE_T >
+template< class USER_HFSM_T, class PARENT_STATE_T, class USER_STATE_T, class ...SUB_STATE_T >
 class Custom_State_Base;
 
 struct Event;
 
 /*----------------BASE STATE CLASS---------------- */
-template<class TOP_STATE_T, class USER_STATE_BASE_T, class USER_STATE_T, class ...SUB_STATE_T >
+template<class USER_HFSM_T, class USER_STATE_BASE_T, class USER_STATE_T, class ...SUB_STATE_T >
 class State  {
     using Substates_Tuple_T = std::tuple<SUB_STATE_T...>;
 
@@ -38,14 +36,6 @@ public:
         TAIL_STATE_T&  tuple_elmt = std::get<TAIL_STATE_T>(_substates);
         tuple_elmt. template custom_state_base_setup(setup_ptr);
     };
-
-    template<class CUSTOM_STATE, class SETUP_PTR_T>
-    void state_setup2(SETUP_PTR_T setup_ptr){
-        if constexpr ( seek_state<CUSTOM_STATE>()){
-            std::cout << "here";
-        }
-    };
-
 
 
 
@@ -70,7 +60,7 @@ public:
  * It does nothing, it serves just to end this series of calls.
  * @param hfsm Pointer to the final state machine object
  */
-    void pass_ptrs_to_substates (HFSM_Base<TOP_STATE_T>* hfsm , std::integral_constant<int, std::tuple_size<std::tuple<SUB_STATE_T...>>::value>);
+    void pass_ptrs_to_substates (USER_HFSM_T* hfsm , std::integral_constant<int, std::tuple_size<std::tuple<SUB_STATE_T...>>::value>);
 
     /**
      * @brief Recursive method, allows to dispatch the hfsm pointer to all the substates of the state.
@@ -78,7 +68,7 @@ public:
      * @param hfsm Pointer to the final state machine object
      */
     template<int index = 0>
-    void pass_ptrs_to_substates (HFSM_Base<TOP_STATE_T>* hfsm, std::integral_constant<int, index> = std::integral_constant<int, 0>());
+    void pass_ptrs_to_substates (USER_HFSM_T* hfsm, std::integral_constant<int, index> = std::integral_constant<int, 0>());
 
     template<class CUSTOM_STATE_T>
     static inline constexpr bool seek_state_in_substates (std::integral_constant<int, std::tuple_size<std::tuple<SUB_STATE_T...>>::value>);
@@ -142,6 +132,7 @@ public:
     }
 
 
+    USER_HFSM_T* _hfsm;
 
 protected:
     State(){};
@@ -151,15 +142,15 @@ protected:
 
 
 
-template<class TOP_STATE_T, class USER_STATE_BASE_T, class USER_STATE_T, class... SUB_STATE_T>
-void State<TOP_STATE_T, USER_STATE_BASE_T, USER_STATE_T, SUB_STATE_T...>::pass_ptrs_to_substates(HFSM_Base<TOP_STATE_T>* hfsm,
+template<class USER_HFSM_T, class USER_STATE_BASE_T, class USER_STATE_T, class... SUB_STATE_T>
+void State<USER_HFSM_T, USER_STATE_BASE_T, USER_STATE_T, SUB_STATE_T...>::pass_ptrs_to_substates(USER_HFSM_T* hfsm,
         std::integral_constant<int, std::tuple_size<std::tuple<SUB_STATE_T...>>::value>) {
 // Do nothing, all tuple elements have received the pointer
 }
 
-template<class TOP_STATE_T, class USER_STATE_BASE_T, class USER_STATE_T, class... SUB_STATE_T>
+template<class USER_HFSM_T, class USER_STATE_BASE_T, class USER_STATE_T, class... SUB_STATE_T>
 template<int index>
-void State<TOP_STATE_T, USER_STATE_BASE_T, USER_STATE_T, SUB_STATE_T...>::pass_ptrs_to_substates(HFSM_Base<TOP_STATE_T>* hfsm, std::integral_constant<int, index>) {
+void State<USER_HFSM_T, USER_STATE_BASE_T, USER_STATE_T, SUB_STATE_T...>::pass_ptrs_to_substates(USER_HFSM_T* hfsm, std::integral_constant<int, index>) {
 
     std::get<index>(_substates).pass_ptrs_to_state(hfsm, static_cast<USER_STATE_T*>(this));
     pass_ptrs_to_substates(hfsm, std::integral_constant<int, index+1>());
@@ -167,16 +158,16 @@ void State<TOP_STATE_T, USER_STATE_BASE_T, USER_STATE_T, SUB_STATE_T...>::pass_p
 }
 
 
-template<class TOP_STATE_T, class USER_STATE_BASE_T, class USER_STATE_T, class... SUB_STATE_T>
+template<class USER_HFSM_T, class USER_STATE_BASE_T, class USER_STATE_T, class... SUB_STATE_T>
 template<class CUSTOM_STATE_T>
-constexpr bool State<TOP_STATE_T, USER_STATE_BASE_T, USER_STATE_T, SUB_STATE_T...>::seek_state_in_substates(std::integral_constant<int, std::tuple_size<std::tuple<SUB_STATE_T...>>::value>) {
+constexpr bool State<USER_HFSM_T, USER_STATE_BASE_T, USER_STATE_T, SUB_STATE_T...>::seek_state_in_substates(std::integral_constant<int, std::tuple_size<std::tuple<SUB_STATE_T...>>::value>) {
 // Do nothing, all tuple elements have been visited
     return false;
 }
 
-template<class TOP_STATE_T, class USER_STATE_BASE_T, class USER_STATE_T, class... SUB_STATE_T>
+template<class USER_HFSM_T, class USER_STATE_BASE_T, class USER_STATE_T, class... SUB_STATE_T>
 template<class CUSTOM_STATE_T, int index>
- constexpr bool State<TOP_STATE_T, USER_STATE_BASE_T, USER_STATE_T, SUB_STATE_T...>::seek_state_in_substates(std::integral_constant<int, index>) {
+ constexpr bool State<USER_HFSM_T, USER_STATE_BASE_T, USER_STATE_T, SUB_STATE_T...>::seek_state_in_substates(std::integral_constant<int, index>) {
 
     // Catch substate at index in the tuple
     //class std::tuple_element<index, Substates_Tuple_T>::type& substate = std::get<index>(_substates);
@@ -192,20 +183,17 @@ template<class CUSTOM_STATE_T, int index>
     else  {
         return seek_state_in_substates<CUSTOM_STATE_T>(std::integral_constant<int, index + 1>());
     }
-
-
-
 }
 
 
 /*----------------BASE CLASS FOR USER STATES---------------- */
-template< class TOP_STATE_T, class PARENT_STATE_T, class USER_STATE_T, class ...SUB_STATE_T >
-class Custom_State_Base : public State<TOP_STATE_T, Custom_State_Base<TOP_STATE_T,PARENT_STATE_T, USER_STATE_T, SUB_STATE_T... >, USER_STATE_T,  SUB_STATE_T ...>{
+template< class USER_HFSM_T, class PARENT_STATE_T, class USER_STATE_T, class ...SUB_STATE_T >
+class Custom_State_Base : public State<USER_HFSM_T, Custom_State_Base<USER_HFSM_T,PARENT_STATE_T, USER_STATE_T, SUB_STATE_T... >, USER_STATE_T,  SUB_STATE_T ...>{
 
-    friend class HFSM_Base <TOP_STATE_T>;
-    using Super = State<TOP_STATE_T, Custom_State_Base<TOP_STATE_T,PARENT_STATE_T, USER_STATE_T, SUB_STATE_T... >, USER_STATE_T, SUB_STATE_T ...>;
+    friend USER_HFSM_T;
+    using Super = State<USER_HFSM_T, Custom_State_Base<USER_HFSM_T,PARENT_STATE_T, USER_STATE_T, SUB_STATE_T... >, USER_STATE_T, SUB_STATE_T ...>;
     using Substates_Tuple_T = std::tuple<SUB_STATE_T...>;
-    using Self = Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>;
+    using Self = Custom_State_Base<USER_HFSM_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>;
 
 public:
 
@@ -217,7 +205,7 @@ public:
      constexpr Handling_Result trigger_transition();
 
     void set_as_current_state(){
-        _hfsm->_current_state_h = & (Super::state_handler) ;
+        Super::_hfsm->_current_state_h = & (Super::state_handler) ;
     }
 
     template<class SETUP_PTR_T>
@@ -225,7 +213,7 @@ public:
         static_cast<USER_STATE_T*>(this) -> setup(setup_ptr);
     };
 
-    void pass_ptrs_to_state(HFSM_Base<TOP_STATE_T>* hfsm, PARENT_STATE_T* parent_state);;
+    void pass_ptrs_to_state(USER_HFSM_T* hfsm, PARENT_STATE_T* parent_state);;
 
     void handle_event_from_substate(Event* event, State_Exit_Func* substate_exit){
 
@@ -247,7 +235,7 @@ public:
         }
         else{
             static_cast<USER_STATE_T*>(this) -> exit();
-            _parent_state-> ascend_state_hierarchy();
+            _parent_state-> template ascend_state_hierarchy<CUSTOM_STATE_T>();
         }
     }
 
@@ -261,16 +249,15 @@ public:
     Trigger_Transition_Func _trigger_transition_cb ;
     Trigger_Transition_Func _init_transition_cb ;
 
-    HFSM_Base<TOP_STATE_T>* _hfsm;
 };
 
-template<class TOP_STATE_T, class PARENT_STATE_T, class USER_STATE_T, class... SUB_STATE_T>
+template<class USER_HFSM_T, class PARENT_STATE_T, class USER_STATE_T, class... SUB_STATE_T>
 template<class CUSTOM_STATE_T>
-constexpr  Handling_Result Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::initial_transition_to_state(){
+constexpr  Handling_Result Custom_State_Base<USER_HFSM_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::initial_transition_to_state(){
     _init_transition_cb = [this]() {
 
         //Check statically if this state is in our fsm
-        static_assert(((_hfsm->_top_state).template seek_state<CUSTOM_STATE_T>()), "The state targeted by this transition does not belong to this state machine");
+        static_assert(((Super ::_hfsm->_top_state).template seek_state<CUSTOM_STATE_T>()), "The state targeted by this transition does not belong to this state machine");
 
         //If the transition target is self
         static_assert(! std::is_same<CUSTOM_STATE_T, USER_STATE_T>::value, "Initial transition cannot target the state emitting it");
@@ -286,15 +273,15 @@ constexpr  Handling_Result Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_S
 }
 
 
-template<class TOP_STATE_T, class PARENT_STATE_T, class USER_STATE_T, class... SUB_STATE_T>
+template<class USER_HFSM_T, class PARENT_STATE_T, class USER_STATE_T, class... SUB_STATE_T>
 template<class CUSTOM_STATE_T>
-constexpr  Handling_Result Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::trigger_transition() {
+constexpr  Handling_Result Custom_State_Base<USER_HFSM_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::trigger_transition() {
     // A lambda is used to store the transition callback. This allows to empty the stack filled by user code before engaging the transition.
 
     _trigger_transition_cb = [this]() {
 
         //Check statically if this state is in our fsm
-        static_assert(((_hfsm->_top_state).template seek_state<CUSTOM_STATE_T>()), "The state targeted by this transition does not belong to this state machine");
+        static_assert(((Super ::_hfsm->_top_state).template seek_state<CUSTOM_STATE_T>()), "The state targeted by this transition does not belong to this state machine");
 
         //If the transition target is self
         if constexpr (std::is_same<CUSTOM_STATE_T, USER_STATE_T>::value){
@@ -324,9 +311,9 @@ constexpr  Handling_Result Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_S
 }
 
 
-template<class TOP_STATE_T, class PARENT_STATE_T, class USER_STATE_T, class... SUB_STATE_T>
+template<class USER_HFSM_T, class PARENT_STATE_T, class USER_STATE_T, class... SUB_STATE_T>
 void
-Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::custom_state_base_handler( Event *event) {
+Custom_State_Base<USER_HFSM_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::custom_state_base_handler( Event *event) {
 
     Handling_Result&& h_result = static_cast<USER_STATE_T*>(this) -> handler(event);
 
@@ -351,10 +338,10 @@ Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::cu
 
 }
 
-template<class TOP_STATE_T, class PARENT_STATE_T, class USER_STATE_T, class... SUB_STATE_T>
-void Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::pass_ptrs_to_state(
-        HFSM_Base<TOP_STATE_T> *hfsm, PARENT_STATE_T *parent_state) {
-    _hfsm = hfsm;
+template<class USER_HFSM_T, class PARENT_STATE_T, class USER_STATE_T, class... SUB_STATE_T>
+void Custom_State_Base<USER_HFSM_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::pass_ptrs_to_state(
+        USER_HFSM_T *hfsm, PARENT_STATE_T *parent_state) {
+    Super ::_hfsm = hfsm;
     _parent_state = parent_state;
 
     // Pass hfsm ptr to substates only if they does exist
@@ -364,9 +351,9 @@ void Custom_State_Base<TOP_STATE_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...
 }
 
 /*----------------BASE CLASS FOR TOP STATE---------------- */
-template<class TOP_STATE_T, class ...SUB_STATE_T >
-class Top_State_Base : public State<TOP_STATE_T, Top_State_Base<TOP_STATE_T,SUB_STATE_T...>, TOP_STATE_T, SUB_STATE_T...> {
-    using Super = State<TOP_STATE_T, Top_State_Base<TOP_STATE_T,SUB_STATE_T...>, TOP_STATE_T, SUB_STATE_T...>;
+template<class USER_HFSM_T, class TOP_STATE_T, class ...SUB_STATE_T >
+class Top_State_Base : public State<USER_HFSM_T, Top_State_Base<USER_HFSM_T, TOP_STATE_T, SUB_STATE_T...>,  TOP_STATE_T, SUB_STATE_T...> {
+    using Super = State<USER_HFSM_T, Top_State_Base<USER_HFSM_T, TOP_STATE_T, SUB_STATE_T...>, TOP_STATE_T, SUB_STATE_T...>;
     using Substates_Tuple_T = std::tuple<SUB_STATE_T...>;
 
 public:
@@ -390,8 +377,9 @@ public:
 
     };
 
-     void pass_ptrs_to_state(HFSM_Base<TOP_STATE_T>* hfsm){
+     void pass_ptrs_to_state(USER_HFSM_T* hfsm){
         // Pass hfsm ptr to substates only if they does exist
+         Super ::_hfsm = hfsm;
         if constexpr (std::tuple_size<Substates_Tuple_T>::value >0) {
             Super ::pass_ptrs_to_substates(hfsm);
         }
