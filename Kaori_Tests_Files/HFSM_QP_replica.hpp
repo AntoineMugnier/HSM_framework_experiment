@@ -10,7 +10,7 @@ class s2;
 class s21;
 class s211;
 
-
+/**********************************************************************************************************************/
 
 class s211 : public Custom_State_Base<
         HFSM, //User HFSM State Type
@@ -19,17 +19,13 @@ class s211 : public Custom_State_Base<
 {
 public:
 
-    Handling_Result handler(Event* event) {
-        switch (event->_sig) {
-            default:
-                return Handling_Result::IGNORED ;
-        }
-    }
+    Handling_Result handler(const Event* const event);
 
-    void init(){ std::cout<< "s211_INIT ;" ;}
-    void entry(){ std::cout<< "s211_ENTRY ;" ;}
-    void exit(){ std::cout<< "s211_EXIT ;" ;}
+    void entry(){ std::cout<< "s211-ENTRY ;" ;}
+    void exit(){ std::cout<< "s211-EXIT ;" ;}
 };
+
+/**********************************************************************************************************************/
 
 class s21 : public Custom_State_Base<
         HFSM, //User HFSM State Type
@@ -39,17 +35,15 @@ class s21 : public Custom_State_Base<
 {
 public:
 
-    Handling_Result handler(Event* event) {
-        switch (event->_sig) {
-            default:
-                return Handling_Result::IGNORED ;
-        }
-    }
+    Handling_Result handler(const Event* const event);
 
-    void init(){ std::cout<< "s21_INIT ;" ;}
-    void entry(){ std::cout<< "s21_ENTRY ;" ;}
-    void exit(){ std::cout<< "s21_EXIT ;" ;}
+    void init();
+
+    void entry(){ std::cout<< "s21-ENTRY ;" ;}
+    void exit(){ std::cout<< "s21-EXIT ;" ;}
 };
+
+/**********************************************************************************************************************/
 
 class s2 : public Custom_State_Base<
         HFSM, //User HFSM State Type
@@ -59,17 +53,14 @@ class s2 : public Custom_State_Base<
 {
 public:
 
-    Handling_Result handler(Event* event) {
-        switch (event->_sig) {
-            default:
-                return Handling_Result::IGNORED ;
-        }
-    }
+    Handling_Result handler(const Event* const event);
 
-    void init(){ std::cout<< "s2_INIT ;" ;}
-    void entry(){ std::cout<< "s2_ENTRY ;" ;}
+    void init();
+    void entry(){ std::cout<< "s2-ENTRY ;" ;}
     void exit();
 };
+
+/**********************************************************************************************************************/
 
 class s11 : public Custom_State_Base<
         HFSM, //User HFSM State Type
@@ -78,11 +69,13 @@ class s11 : public Custom_State_Base<
 {
 public:
 
-    Handling_Result handler(Event* event);
+    Handling_Result handler(const Event* const event);
 
-    void entry(){ std::cout<< "s11_ENTRY ;" ;}
-    void exit(){ std::cout<< "s11_EXIT ;" ;}
+    void entry(){ std::cout<< "s11-ENTRY ;" ;}
+    void exit(){ std::cout<< "s11-EXIT ;" ;}
 };
+
+/**********************************************************************************************************************/
 
 class s1 : public Custom_State_Base<
         HFSM, //User HFSM State Type
@@ -92,13 +85,14 @@ class s1 : public Custom_State_Base<
 {
 public:
 
-    Handling_Result handler(Event* event);
+    Handling_Result handler(const Event* const event);
 
     void init();
-    void entry(){ std::cout<< "s1_ENTRY ;" ;}
-    void exit(){ std::cout<< "s1_EXIT ;" ;}
+    void entry(){ std::cout<< "s1-ENTRY ;" ;}
+    void exit(){ std::cout<< "s1-EXIT ;" ;}
 };
 
+/**********************************************************************************************************************/
 
 class s : public Custom_State_Base<
         HFSM, //User HFSM State Type
@@ -109,12 +103,14 @@ class s : public Custom_State_Base<
 {
 public:
 
-    Handling_Result handler(Event* event);
+    Handling_Result handler(const Event* const event);
 
     void init();
-    void entry(){ std::cout<< "s_ENTRY ;" ;}
+    void entry(){ std::cout<< "s-ENTRY ;" ;}
     void exit();
 };
+
+/**********************************************************************************************************************/
 
 class Top_State : public Top_State_Base<
         HFSM,
@@ -129,7 +125,7 @@ public:
     void init();
 };
 
-
+/**********************************************************************************************************************/
 
 class HFSM : public HFSM_Base<HFSM, Top_State>{
 public:
@@ -139,3 +135,4 @@ protected:
     bool m_foo;
 };
 
+/**********************************************************************************************************************/

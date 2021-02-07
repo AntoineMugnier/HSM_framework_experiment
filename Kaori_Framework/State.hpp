@@ -21,7 +21,7 @@ class State  {
 
 public:
 
-     Handler_Func state_handler= [this]( Event* event) {
+     Handler_Func state_handler= [this]( const Event* const event) {
          static_cast<USER_STATE_BASE_T*>(this) -> custom_state_base_handler(event);
     };
 
@@ -127,7 +127,7 @@ public:
         else return false;
     }
 
-    void handle_event_from_substate_b(Event* event, State_Exit_Func* substate_exit){
+    void handle_event_from_substate_b(const Event* const event, State_Exit_Func* substate_exit){
         static_cast<USER_STATE_BASE_T*>(this) -> handle_event_from_substate(event, substate_exit);
     }
 
@@ -169,9 +169,6 @@ template<class USER_HFSM_T, class USER_STATE_BASE_T, class USER_STATE_T, class..
 template<class CUSTOM_STATE_T, int index>
  constexpr bool State<USER_HFSM_T, USER_STATE_BASE_T, USER_STATE_T, SUB_STATE_T...>::seek_state_in_substates(std::integral_constant<int, index>) {
 
-    // Catch substate at index in the tuple
-    //class std::tuple_element<index, Substates_Tuple_T>::type& substate = std::get<index>(_substates);
-
     //Determinate if this substate is the state type we seek
     if constexpr (std::is_same<class std::tuple_element<index, Substates_Tuple_T>::type, CUSTOM_STATE_T>::value){
         return true;
@@ -199,7 +196,7 @@ public:
 
     Custom_State_Base(){};
 
-    void custom_state_base_handler( Event* event);
+    void custom_state_base_handler( const Event* const event);
 
     template<class CUSTOM_STATE_T>
      constexpr Handling_Result trigger_transition();
@@ -215,7 +212,7 @@ public:
 
     void pass_ptrs_to_state(USER_HFSM_T* hfsm, PARENT_STATE_T* parent_state);;
 
-    void handle_event_from_substate(Event* event, State_Exit_Func* substate_exit){
+    void handle_event_from_substate(const Event* const event, State_Exit_Func* substate_exit){
 
         _subnstate_exit = substate_exit;
 
@@ -303,6 +300,7 @@ constexpr  Handling_Result Custom_State_Base<USER_HFSM_T, PARENT_STATE_T, USER_S
         }
         //Else, then we ascend state hierarchy to find the state
         else {
+            static_cast<USER_STATE_T*>(this) -> exit();
             _parent_state->template ascend_state_hierarchy<CUSTOM_STATE_T>();
         }
         };
@@ -313,7 +311,7 @@ constexpr  Handling_Result Custom_State_Base<USER_HFSM_T, PARENT_STATE_T, USER_S
 
 template<class USER_HFSM_T, class PARENT_STATE_T, class USER_STATE_T, class... SUB_STATE_T>
 void
-Custom_State_Base<USER_HFSM_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::custom_state_base_handler( Event *event) {
+Custom_State_Base<USER_HFSM_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::custom_state_base_handler(const Event* const event) {
 
     Handling_Result&& h_result = static_cast<USER_STATE_T*>(this) -> handler(event);
 
@@ -359,11 +357,11 @@ class Top_State_Base : public State<USER_HFSM_T, Top_State_Base<USER_HFSM_T, TOP
 public:
     Top_State_Base(){};
 
-    static Handling_Result custom_state_base_handler( Event* event) {
+    static Handling_Result custom_state_base_handler( const Event* const event) {
         return Handling_Result::IGNORED;
     }
 
-    void handle_event_from_substate(Event* event, State_Exit_Func* substate_exit){
+    void handle_event_from_substate(const Event* const event, State_Exit_Func* substate_exit){
         Super::state_handler(event);
     }
 

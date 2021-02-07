@@ -44,7 +44,7 @@ public:
      * @brief Dispatch an event to the state handler of the current state
      * @param event Event-derived class
      */
-    void dispatch(Event *event){
+    void dispatch(const Event* const event){
         Handler_Func& a = *_current_state_h;
         a(event);
     };
