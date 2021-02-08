@@ -32,5 +32,5 @@ int main() {
 */
 
 
-std::cout<< "END" ;
+std::cout << std::endl << "END" ;
 }

@@ -2,19 +2,17 @@
 #include <iostream>
 
 
-void s2::exit() {
-    if( ! _hfsm->m_foo){
-        _hfsm->m_foo = true ;
-    }
-    std::cout<< "s2-EXIT ;" ;
-}
+
 
 Handling_Result s2::handler(const Event* const event) {
     switch (event->_sig) {
         case Signal::I:
-            std::cout << "s2-I ;" ;
-            if(!_hfsm->m_foo) _hfsm->m_foo = true ;
-            return Handling_Result::HANDLED;
+            if(!_hfsm->m_foo){
+                std::cout << "s2-I ;" ;
+                _hfsm->m_foo = true ;
+                return Handling_Result::HANDLED;
+            }
+            else return Handling_Result::IGNORED;
         case Signal::C:
             std::cout << "s2-C ;" ;
             return trigger_transition<s1>();
@@ -51,10 +49,16 @@ void s::init() {
 
 Handling_Result s::handler(const Event* const event) {
     switch (event->_sig) {
+        case Signal::E:
+            std::cout << "s-E ;" ;
+            return trigger_transition<s11>();
         case Signal::I:
             std::cout << "s-I ;" ;
-            if(_hfsm->m_foo)_hfsm->m_foo = false;
-            return Handling_Result::HANDLED;
+            if(_hfsm->m_foo){
+                _hfsm->m_foo = false;
+                return Handling_Result::HANDLED;
+            }
+            else return  Handling_Result::IGNORED ;
         default:
             return Handling_Result::IGNORED ;
     }
@@ -72,9 +76,12 @@ Handling_Result s1::handler(const Event* const event) {
             std::cout << "s1-C ;" ;
             return trigger_transition<s2>();
         case Signal::D:
-            if (!_hfsm->m_foo) _hfsm->m_foo = true;
-            std::cout << "s1-D ;" ;
-            return trigger_transition<s>();
+            if (!_hfsm->m_foo) {
+                _hfsm->m_foo = true;
+                std::cout << "s1-D ;";
+                return trigger_transition<s>();
+            }
+            else return  Handling_Result::IGNORED;
         case Signal::F:
             std::cout << "s1-F ;" ;
             return trigger_transition<s211>();
@@ -94,9 +101,12 @@ void s1::init() {
 Handling_Result s11::handler(const Event* const event) {
     switch (event->_sig) {
         case Signal::D:
-            std::cout << "s11-D ;" ;
-            if (_hfsm->m_foo) _hfsm->m_foo = false ;
-            return trigger_transition<s1>();
+            if (_hfsm->m_foo){
+                std::cout << "s11-D ;" ;
+                _hfsm->m_foo = false ;
+                return trigger_transition<s1>();
+            }
+            else return Handling_Result::IGNORED ;
         case Signal::H:
             std::cout << "s11-H ;" ;
             return trigger_transition<s>();
@@ -123,7 +133,7 @@ Handling_Result s21::handler(const Event* const event) {
             return trigger_transition<s211>();
         case Signal::G:
             std::cout << "s21-G ;" ;
-            return trigger_transition<s11>();
+            return trigger_transition<s1>();
         default:
             return Handling_Result::IGNORED ;
     }
