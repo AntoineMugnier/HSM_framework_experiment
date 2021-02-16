@@ -15,7 +15,7 @@ struct Event{
 };
 
 using Handler_Func = std::function <void(const Event* const)>;
-using State_Exit_Func = std::function <void(void)>;
+    using State_Exit_Func = std::function <void(void)>;
 using Subnstate_Exit_Func = std::function <void(void)>;
 using Trigger_Transition_Func = std::function <void(void)>;
 

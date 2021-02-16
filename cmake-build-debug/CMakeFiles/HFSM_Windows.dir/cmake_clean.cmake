@@ -1,7 +1,7 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/HFSM_Windows.dir/main.cpp.obj"
+  "CMakeFiles/HFSM_Windows.dir/Kaori_Tests_Files/HFSM_QP_replica.cpp.o"
+  "CMakeFiles/HFSM_Windows.dir/main.cpp.o"
   "HFSM_Windows.exe"
-  "HFSM_Windows.exe.manifest"
   "HFSM_Windows.pdb"
   "libHFSM_Windows.dll.a"
 )

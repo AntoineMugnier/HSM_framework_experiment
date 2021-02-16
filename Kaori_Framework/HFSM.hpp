@@ -9,7 +9,6 @@
 #include <cstdint>
 #include <tuple>
 #include <State.hpp>
-#define MAX_NEST_DEPTH 6
 /**
  * @brief Class representing the state machine of the framework.
  * Important storage roles :
@@ -66,10 +65,7 @@ protected:
  * @brief The base constructor initializing the state machine. Called by the child
  */
     TOP_STATE_T _top_state;
-
-
     Handler_Func* _current_state_h;
-    Handler_Func* path[MAX_NEST_DEPTH];
     HFSM_Base();
 
 };
