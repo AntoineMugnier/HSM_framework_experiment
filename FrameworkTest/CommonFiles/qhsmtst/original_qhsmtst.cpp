@@ -1,4 +1,4 @@
-#include "HFSM_QP_replica.hpp"
+#include "original_qhsmtst.hpp"
 #include <iostream>
 
 
