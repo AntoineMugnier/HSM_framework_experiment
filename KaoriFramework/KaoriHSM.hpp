@@ -108,7 +108,7 @@ public:
             if constexpr (substate_t::has_substates()) {
                 substate.entry();
                 substate.init();
-                substate._init_transition_cb();
+                substate._init_transition_cb(&substate);
             } else {
                 //if the target state does not have substates, enter it and set it as the current state
                 substate.set_as_current_state();
@@ -239,7 +239,7 @@ public:
         // If this substate type is the state type we seek
         if constexpr  (std::is_same<CUSTOM_STATE_T, USER_STATE_T>::value) {
             static_cast<USER_STATE_T *>(this)->init();
-            _init_transition_cb();
+            _init_transition_cb(this);
         } else if constexpr (Super::template seek_state<CUSTOM_STATE_T>()) {
             Super::template drill_state_hierarchy<CUSTOM_STATE_T>();
         } else {
@@ -255,8 +255,9 @@ public:
     PARENT_STATE_T *_parent_state;
     State_Exit_Func _state_exit = [=]() { static_cast<USER_STATE_T *>(this)->exit(); };
     Subnstate_Exit_Func *_subnstate_exit;
-    Trigger_Transition_Func _trigger_transition_cb;
-    Trigger_Transition_Func _init_transition_cb;
+    using Trigger_Transition_t = void (*)(Self*) ;
+    Trigger_Transition_t _trigger_transition_cb ;
+    Trigger_Transition_t _init_transition_cb ;
 
 };
 
@@ -264,21 +265,18 @@ template<class USER_HFSM_T, class PARENT_STATE_T, class USER_STATE_T, class... S
 template<class CUSTOM_STATE_T>
 constexpr Handling_Result
 Custom_State_Base<USER_HFSM_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::initial_transition_to_state() {
-    _init_transition_cb = [this]() {
+    _init_transition_cb = [](Self* me) {
 
         //Check statically if this state is in our fsm
-        static_assert(((Super::_hfsm->_top_state).template seek_state<CUSTOM_STATE_T>()),
-                      "The state targeted by this transition does not belong to this state machine");
+        static_assert(((static_cast<Self ::Super*>(me)->_hfsm->_top_state).template seek_state<CUSTOM_STATE_T>()), "The state targeted by this transition does not belong to this state machine");
 
         //If the transition target is self
-        static_assert(!std::is_same<CUSTOM_STATE_T, USER_STATE_T>::value,
-                      "Initial transition cannot target the state emitting it");
+        static_assert(! std::is_same<CUSTOM_STATE_T, USER_STATE_T>::value, "Initial transition cannot target the state emitting it");
         //If the transition target is one of the substates
-        static_assert(Super::template seek_state<CUSTOM_STATE_T>(),
-                      "Initial transition cannot target a parent state of the state emitting it");
+        static_assert(Self :: Super::template seek_state<CUSTOM_STATE_T>(), "Initial transition cannot target a parent state of the state emitting it");
 
         // Drill state hierarchy to find the target of the transition
-        Super::template drill_state_hierarchy<CUSTOM_STATE_T>();
+        static_cast<Self::Super*>(me)-> template  drill_state_hierarchy<CUSTOM_STATE_T>();
     };
 
     return Handling_Result::TRANSITION;
@@ -292,32 +290,32 @@ constexpr Handling_Result
 Custom_State_Base<USER_HFSM_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::trigger_transition() {
     // A lambda is used to store the transition callback. This allows to empty the stack filled by user code before engaging the transition.
 
-    _trigger_transition_cb = [this]() {
+    _trigger_transition_cb = [](Self* me) {
 
         //Check statically if this state is in our fsm
-        static_assert(((Super::_hfsm->_top_state).template seek_state<CUSTOM_STATE_T>()),
-                      "The state targeted by this transition does not belong to this state machine");
+        static_assert(((static_cast<Self ::Super*>(me)->_hfsm->_top_state).template seek_state<CUSTOM_STATE_T>()), "The state targeted by this transition does not belong to this state machine");
 
         //If the transition target is self
-        if constexpr (std::is_same<CUSTOM_STATE_T, USER_STATE_T>::value) {
+        if constexpr (std::is_same<CUSTOM_STATE_T, USER_STATE_T>::value){
 
-            static_cast<USER_STATE_T *>(this)->exit();
-            static_cast<USER_STATE_T *>(this)->entry();
+            static_cast<USER_STATE_T*>(me)->exit();
+            static_cast<USER_STATE_T*>(me)->entry();
 
             if constexpr (Super::has_substates()) {
-                static_cast<USER_STATE_T *>(this)->init();
-                _init_transition_cb();
-            } else {
-                set_as_current_state();
+                static_cast<USER_STATE_T *>(me)->init();
+                me->_init_transition_cb(me);
+            }
+            else{
+                me->set_as_current_state();
             }
         }
             //If the transition target is one of the substates
-        else if constexpr (Super::template seek_state<CUSTOM_STATE_T>()) {
-            Super::template drill_state_hierarchy<CUSTOM_STATE_T>();
+        else if constexpr (Super::template seek_state<CUSTOM_STATE_T>()){
+            static_cast<Self ::Super*>(me)-> template  drill_state_hierarchy<CUSTOM_STATE_T>();
         }
             //Else, then we ascend state hierarchy to find the state
         else {
-            _parent_state->template ascend_state_hierarchy<CUSTOM_STATE_T>();
+            me->_parent_state->template ascend_state_hierarchy<CUSTOM_STATE_T>();
         }
     };
 
@@ -337,7 +335,7 @@ Custom_State_Base<USER_HFSM_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...>::cu
         if constexpr (Super::has_substates()) {
             (*_subnstate_exit)();
         }
-        _trigger_transition_cb();
+        _trigger_transition_cb(this);
     } else if (h_result == Handling_Result::IGNORED) {
         _state_exit = [this]() {
             if constexpr (Super::has_substates()) {
