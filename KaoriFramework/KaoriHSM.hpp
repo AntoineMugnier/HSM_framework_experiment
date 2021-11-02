@@ -1,5 +1,9 @@
 #pragma once
 
+/**
+ * @file KaoriHSM.hpp Unique file , containing all the framework features
+ * @brief Contains defining of the
+ */
 #include "tuple"
 #include "functional"
 #include <type_traits>

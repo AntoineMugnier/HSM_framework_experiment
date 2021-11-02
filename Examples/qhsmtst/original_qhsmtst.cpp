@@ -2,8 +2,6 @@
 #include <iostream>
 
 
-
-
 Handling_Result s2::handler(const Event* const event) {
     switch (event->_sig) {
         case Signal::I:
