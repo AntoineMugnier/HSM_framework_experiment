@@ -2,19 +2,26 @@
 
 /**
  * @file KaoriHSM.hpp Unique file , containing all the framework features
- * @brief Contains defining of the
+ * @author Antoine Mugnier amugnier@europe.com
+ * @brief Contains definitions of :
+ *      - HFSM_Base : The base class from which your custom state machine must derive
+ *      - Top_State_Base : The base class for your unique custom top state
+ *      - Custom_State_Base : The base class for your unique custom top state
  */
+
 #include "tuple"
 #include "functional"
 #include <type_traits>
 #include <cstdint>
 
-enum struct Signal{A,B,C,D,E,F,G,H,I};
 enum struct Handling_Result{HANDLED, IGNORED, TRANSITION};
 
-
+enum struct Signal;
+/**
+ * @brief You can create your own events types which derive from this class
+ *
+ */
 struct Event{
-    Event(Signal sig):_sig(sig){};
     Signal _sig;
 };
 
@@ -28,7 +35,7 @@ class Custom_State_Base;
 
 struct Event;
 
-/*----------------BASE STATE CLASS---------------- */
+/*----------------BASE STATE CLASS - Private to framework---------------- */
 template<class USER_HFSM_T, class USER_STATE_BASE_T, class USER_STATE_T, class ...SUB_STATE_T>
 class State {
     using Substates_Tuple_T = std::tuple<SUB_STATE_T...>;
@@ -39,16 +46,16 @@ public:
         static_cast<USER_STATE_BASE_T *>(this)->custom_state_base_handler(event);
     };
 
-    template<class HEAD_STATE_T, class NECK_STATE_T, class... OTHER_STATE_T, class SETUP_PTR_T>
-    void state_setup(SETUP_PTR_T setup_ptr) {
+    template<class HEAD_STATE_T, class NECK_STATE_T, class... OTHER_STATE_T, class SETUP_STRUCT_T>
+    void state_setup(SETUP_STRUCT_T& setup_struct) {
         HEAD_STATE_T &tuple_elmt = std::get<HEAD_STATE_T>(_substates);
-        tuple_elmt.template state_setup<NECK_STATE_T, OTHER_STATE_T...>(setup_ptr);
+        tuple_elmt.template state_setup<NECK_STATE_T, OTHER_STATE_T...>(setup_struct);
     };
 
-    template<class TAIL_STATE_T, class SETUP_PTR_T>
-    void state_setup(SETUP_PTR_T setup_ptr) {
+    template<class TAIL_STATE_T, class SETUP_STRUCT_T>
+    void state_setup(SETUP_STRUCT_T& setup_struct) {
         TAIL_STATE_T &tuple_elmt = std::get<TAIL_STATE_T>(_substates);
-        tuple_elmt.template custom_state_base_setup(setup_ptr);
+        tuple_elmt.template custom_state_base_setup(setup_struct);
     };
 
 
@@ -199,7 +206,14 @@ constexpr bool State<USER_HFSM_T, USER_STATE_BASE_T, USER_STATE_T, SUB_STATE_T..
     }
 }
 
-
+/**
+ * @brief Base class for all the user-defined states except the top state
+ * @tparam USER_HFSM_T User HFSM State Type
+ * @tparam PARENT_STATE_T Type of the unique parent state of this state
+ * @tparam USER_STATE_T The custom-defined
+ *
+ * @tparam SUB_STATE_T All direct substates
+ */
 /*----------------BASE CLASS FOR USER STATES---------------- */
 template<class USER_HFSM_T, class PARENT_STATE_T, class USER_STATE_T, class ...SUB_STATE_T>
 class Custom_State_Base
@@ -223,10 +237,11 @@ public:
         Super::_hfsm->_current_state_h = &(Super::state_handler);
     }
 
-    template<class SETUP_PTR_T>
-    void custom_state_base_setup(SETUP_PTR_T setup_ptr) {
-        static_cast<USER_STATE_T *>(this)->setup(setup_ptr);
+    template<class SETUP_STRUCT_T>
+    void custom_state_base_setup(SETUP_STRUCT_T& setup_struct) {
+        static_cast<USER_STATE_T *>(this)->setup(setup_struct);
     };
+
 
     void pass_ptrs_to_state(USER_HFSM_T *hfsm, PARENT_STATE_T *parent_state);;
 
@@ -255,7 +270,6 @@ public:
     template<class CUSTOM_STATE_T>
     constexpr Handling_Result initial_transition_to_state();
 
-//protected: TODO remove ?
     PARENT_STATE_T *_parent_state;
     State_Exit_Func _state_exit = [=]() { static_cast<USER_STATE_T *>(this)->exit(); };
     Subnstate_Exit_Func *_subnstate_exit;
@@ -367,7 +381,12 @@ void Custom_State_Base<USER_HFSM_T, PARENT_STATE_T, USER_STATE_T, SUB_STATE_T...
     }
 }
 
-/*----------------BASE CLASS FOR TOP STATE---------------- */
+/**
+ * @brief Base class for the user-defined unique top state
+ * @tparam USER_HFSM_T User HFSM State Type
+ * @tparam TOP_STATE_T User derived Top State Type
+ * @tparam SUB_STATE_T All direct substates
+ */
 template<class USER_HFSM_T, class TOP_STATE_T, class ...SUB_STATE_T>
 class Top_State_Base
         : public State<USER_HFSM_T, Top_State_Base<USER_HFSM_T, TOP_STATE_T, SUB_STATE_T...>, TOP_STATE_T, SUB_STATE_T...> {
@@ -414,18 +433,16 @@ public:
 
 
 /**
- * @brief Class representing the state machine of the framework.
+ * @brief Is the state machine class of the framework.
  * Important storage roles :
  * -Contains the top state which contains itself all the substates of the state machine.
  * -This class also holds a pointer to the state handler of the current state.
- * Important functionnal roles :
+ * Important functional roles :
  * -Receive and dispatch all the incoming events
  * -Realize the transition between states
- *
+ * @tparam USER_HFSM Type of the user-defined HSM
  * @tparam TOP_STATE_T Type of the top state that the state machine contains
  */
-
-
 
 
 template<class USER_HFSM, class TOP_STATE_T>
@@ -455,13 +472,20 @@ public:
     bool is_in();
 
     /**
-     *
-     * @tparam STATE_TYPE_HIERARCHY_TO_LEAF Series of template parameters defining the position of the state in the hierarchy
-     * @param struct_ptr Pointer to a derived type of Setup_Struct which contains all the customs parameter that the state has to integrate
+     * @brief Perform the initial transition of the state machine
      */
-    template<typename ...STATE_TYPE_HIERARCHY_TO_LEAF, typename SETUP_PTR_T >
-    void state_setup(SETUP_PTR_T struct_ptr){
-        _top_state.template state_setup<STATE_TYPE_HIERARCHY_TO_LEAF...>(struct_ptr);
+    void init()
+    {
+        _top_state.init();
+    }
+    /**
+     * @brief Allow to send parameters to a specific state encapsulated in the state machine
+     * @tparam STATE_TYPE_HIERARCHY_TO_LEAF Series of template parameters defining the position of the state in the hierarchy
+     * @param struct_ptr Pointer to the SETUP_PTR_T type which defines the
+     */
+    template<typename ...STATE_TYPE_HIERARCHY_TO_LEAF, typename SETUP_STRUCT_T >
+    void state_setup(SETUP_STRUCT_T& setup_struct){
+        _top_state.template state_setup<STATE_TYPE_HIERARCHY_TO_LEAF...>(setup_struct);
     };
 
 protected:
@@ -477,5 +501,4 @@ protected:
 template<class USER_HFSM, class TOP_STATE_T>
 HFSM_Base<USER_HFSM, TOP_STATE_T>::HFSM_Base() {
     _top_state.pass_ptrs_to_state(static_cast<USER_HFSM*>(this)); // Pass the this pointer to all substates
-    _top_state.init();
 };

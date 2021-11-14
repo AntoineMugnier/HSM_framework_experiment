@@ -131,6 +131,7 @@ Handling_Result s21::handler(const Event* const event) {
             return trigger_transition<s211>();
         case Signal::G:
             std::cout << "s21-G ;" ;
+            std::cout << _str; // Will print the str when G signal is received
             return trigger_transition<s1>();
         default:
             return Handling_Result::IGNORED ;

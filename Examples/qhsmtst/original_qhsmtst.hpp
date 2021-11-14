@@ -10,6 +10,9 @@ class s2;
 class s21;
 class s211;
 
+//Enum defining the signals specific to this example
+enum struct Signal{A,B,C,D,E,F,G,H,I};
+
 /**********************************************************************************************************************/
 
 class s211 : public Custom_State_Base<
@@ -23,6 +26,7 @@ public:
 
     void entry(){ std::cout<< "s211-ENTRY ;" ;}
     void exit(){ std::cout<< "s211-EXIT ;" ;}
+
 };
 
 /**********************************************************************************************************************/
@@ -33,6 +37,8 @@ class s21 : public Custom_State_Base<
         s21, // Me
         s211> // First child
 {
+protected:
+    std::string _str;
 public:
 
     Handling_Result handler(const Event* const event);
@@ -41,6 +47,10 @@ public:
 
     void entry(){ std::cout<< "s21-ENTRY ;" ;}
     void exit(){ std::cout<< "s21-EXIT ;" ;}
+    void setup(std::string& str){
+        // copy the string into _str
+        _str = str;
+    }
 };
 
 /**********************************************************************************************************************/
@@ -130,8 +140,10 @@ public:
 class HFSM : public HFSM_Base<HFSM, Top_State>{
 public:
     HFSM(){};
+
+    // Only other states of the HSM can access the m_foo variable
     friend Top_State; friend s; friend s1; friend s11; friend s2; friend s21; friend s211;
-protected:
+
     bool m_foo;
 };
 
