@@ -18,4 +18,10 @@ and cd to it:
 ``` cd my-build-dir ```
 
 Generate makefiles:  
-``` cmake -G "CodeBlocks - MinGW Makefiles" ../ ```
+``` cmake -G "CodeBlocks - Unix Makefiles" ../ ```
+
+Build project:  
+``` make ```
+
+Run:  
+``` ./Examples/qhsmtst/qhsmtst ```

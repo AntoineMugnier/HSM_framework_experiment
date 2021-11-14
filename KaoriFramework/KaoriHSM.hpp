@@ -1,9 +1,9 @@
 #pragma once
 
 /**
- * @file KaoriHSM.hpp Unique file , containing all the framework features
- * @author Antoine Mugnier amugnier@europe.com
- * @brief Contains definitions of :
+ * @file KaoriHSM.hpp
+ * @author Antoine Mugnier
+ * @brief File containing all the framework features. Contains definitions of :
  *      - HFSM_Base : The base class from which your custom state machine must derive
  *      - Top_State_Base : The base class for your unique custom top state
  *      - Custom_State_Base : The base class for your unique custom top state
